@@ -83,20 +83,13 @@ export default function App() {
 
   // Input validation
   const validateInputs = () => {
-    if (!resumeText.trim() && !jobDescription.trim()) {
-      addToast('error', 'Both Resume and Job Description inputs are empty.');
-      return false;
-    }
     if (!resumeText.trim()) {
-      addToast('error', 'Please enter your Resume text to start analysis.');
-      return false;
-    }
-    if (!jobDescription.trim()) {
-      addToast('error', 'Please enter the Job Description to compare against.');
+      addToast('error', 'Please enter or upload your Resume text to start analysis.');
       return false;
     }
     return true;
   };
+
 
   // Perform Analysis
   const handleAnalyze = () => {
@@ -514,7 +507,7 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
             {/* Job Description Text Box */}
             <Card
               title="Target Job Description"
-              description="Paste the target job opening posting requirements"
+              description="Optional — paste a job posting to compare and get a keyword match score"
               headerIcon={Target}
             >
               <div className="relative">
@@ -524,13 +517,11 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
                   onChange={(e) => setJobDescription(e.target.value)}
                   placeholder="Paste the full job posting details, qualifications, and core requirements here..."
                   rows={12}
-                  className={`w-full rounded-xl p-4 text-sm text-gray-200 placeholder-gray-500 font-sans glass-input resize-none h-[300px] ${
-                    !jobDescription.trim() && results ? 'border-rose-500/40 focus:border-rose-500' : ''
-                  }`}
+                  className="w-full rounded-xl p-4 text-sm text-gray-200 placeholder-gray-500 font-sans glass-input resize-none h-[300px]"
                   aria-label="Job Description Input"
                 />
                 <div className="absolute bottom-3 right-3 text-[10px] text-gray-500 font-bold bg-dark-950/80 px-2.5 py-1 rounded border border-white/5">
-                  {getWordCount(jobDescription)} words
+                  {jobDescription.trim() ? `${getWordCount(jobDescription)} words` : 'Optional'}
                 </div>
               </div>
             </Card>
@@ -672,7 +663,7 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
                     <div className="lg:col-span-5 h-full">
                       <Card className="flex flex-col items-center justify-center text-center p-8 h-full bg-dark-900/60">
                         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-6">
-                          ATS Compatibility Score
+                          {results.mode === 'resume-only' ? 'Resume Quality Score' : 'ATS Compatibility Score'}
                         </h3>
 
                         {/* Circular Score Indicator */}
@@ -706,10 +697,10 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
                           </div>
                         </div>
 
-                        {/* Animated Progress Bar */}
+                        {/* Progress label adapts to mode */}
                         <div className="w-full max-w-xs space-y-2 mb-6">
                           <div className="flex justify-between text-xs text-gray-400 font-bold">
-                            <span>Keyword Alignment Progress</span>
+                            <span>{results.mode === 'resume-only' ? 'Resume Quality Score' : 'Keyword Alignment Progress'}</span>
                             <span>{results.score}%</span>
                           </div>
                           <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
@@ -720,33 +711,65 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
                           </div>
                         </div>
 
-                        {/* Numerical stats counts */}
+                        {/* Numerical stats counts — adapt to mode */}
                         <div className="grid grid-cols-3 gap-2 w-full pt-6 border-t border-white/5">
-                          <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
-                            <span className="block text-xl font-bold text-white leading-tight font-heading">
-                              {results.totalKeywords}
-                            </span>
-                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
-                              JD Keywords
-                            </span>
-                          </div>
-                          <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-center">
-                            <span className="block text-xl font-bold text-emerald-400 leading-tight font-heading">
-                              {results.matchedCount}
-                            </span>
-                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
-                              Matched
-                            </span>
-                          </div>
-                          <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 text-center">
-                            <span className="block text-xl font-bold text-rose-400 leading-tight font-heading">
-                              {results.missingCount}
-                            </span>
-                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
-                              Missing
-                            </span>
-                          </div>
+                          {results.mode === 'resume-only' ? (
+                            <>
+                              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                                <span className="block text-xl font-bold text-white leading-tight font-heading">
+                                  {results.totalKeywords}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                                  Resume Words
+                                </span>
+                              </div>
+                              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-center">
+                                <span className="block text-xl font-bold text-emerald-400 leading-tight font-heading">
+                                  {results.signals?.techTermsFound?.length ?? 0}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                                  Tech Terms
+                                </span>
+                              </div>
+                              <div className="p-3 rounded-xl bg-brand-blue/5 border border-brand-blue/10 text-center">
+                                <span className="block text-xl font-bold text-brand-blue leading-tight font-heading">
+                                  {results.signals?.actionVerbsFound?.length ?? 0}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                                  Action Verbs
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+                                <span className="block text-xl font-bold text-white leading-tight font-heading">
+                                  {results.totalKeywords}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                                  JD Keywords
+                                </span>
+                              </div>
+                              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-center">
+                                <span className="block text-xl font-bold text-emerald-400 leading-tight font-heading">
+                                  {results.matchedCount}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                                  Matched
+                                </span>
+                              </div>
+                              <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10 text-center">
+                                <span className="block text-xl font-bold text-rose-400 leading-tight font-heading">
+                                  {results.missingCount}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">
+                                  Missing
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </div>
+
                       </Card>
                     </div>
 
@@ -820,8 +843,105 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
                     </div>
                   </div>
 
-                  {/* Keywords Section */}
-                  <div className="space-y-6">
+                  {/* Keywords / Signal Section — mode-aware */}
+                  {results.mode === 'resume-only' ? (
+                    /* Resume-Only: Signal Breakdown Cards */
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Quality Signal Breakdown</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Action Verbs */}
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">Action Verbs</span>
+                            <span className="text-xs font-bold text-brand-indigo">{results.signals?.verbScore ?? 0}/25 pts</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mb-3">
+                            <div className="h-full bg-gradient-to-r from-brand-indigo to-brand-emerald rounded-full" style={{ width: `${((results.signals?.verbScore ?? 0)/25)*100}%` }} />
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(results.signals?.actionVerbsFound ?? []).length > 0
+                              ? results.signals.actionVerbsFound.map(v => <span key={v} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">{v}</span>)
+                              : <span className="text-[10px] text-gray-500">No action verbs detected</span>}
+                          </div>
+                        </div>
+
+                        {/* Tech Terms */}
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">Technical Keywords</span>
+                            <span className="text-xs font-bold text-brand-blue">{results.signals?.techScore ?? 0}/20 pts</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mb-3">
+                            <div className="h-full bg-gradient-to-r from-brand-blue to-brand-indigo rounded-full" style={{ width: `${((results.signals?.techScore ?? 0)/30)*100}%` }} />
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(results.signals?.techTermsFound ?? []).length > 0
+                              ? results.signals.techTermsFound.map(v => <span key={v} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-brand-blue/10 border border-brand-blue/20 text-brand-blue">{v}</span>)
+                              : <span className="text-[10px] text-gray-500">No technical terms detected</span>}
+                          </div>
+                        </div>
+
+                        {/* Quantified Achievements */}
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">Quantified Achievements</span>
+                            <span className="text-xs font-bold text-brand-purple">{results.signals?.achievementScore ?? 0}/25 pts</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mb-3">
+                            <div className="h-full bg-gradient-to-r from-brand-purple to-brand-blue rounded-full" style={{ width: `${((results.signals?.achievementScore ?? 0)/25)*100}%` }} />
+                          </div>
+                          <p className="text-[10px] text-gray-400">{results.signals?.numberMatches ?? 0} real metric(s) detected — excluding dates like years</p>
+                        </div>
+
+                        {/* Structure */}
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">Section Structure</span>
+                            <span className="text-xs font-bold text-brand-emerald">{results.signals?.structureScore ?? 0}/15 pts</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mb-3">
+                            <div className="h-full bg-gradient-to-r from-brand-emerald to-brand-indigo rounded-full" style={{ width: `${((results.signals?.structureScore ?? 0)/15)*100}%` }} />
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {(results.signals?.sectionsFound ?? []).length > 0
+                              ? results.signals.sectionsFound.map(s => <span key={s} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-brand-emerald/10 border border-brand-emerald/20 text-brand-emerald capitalize">{s}</span>)
+                              : <span className="text-[10px] text-gray-500">No standard sections found</span>}
+                          </div>
+                        </div>
+
+                        {/* Contact Info */}
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">Contact Info</span>
+                            <span className="text-xs font-bold text-brand-purple">{results.signals?.contactScore ?? 0}/10 pts</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mb-3">
+                            <div className="h-full bg-gradient-to-r from-brand-purple to-brand-blue rounded-full" style={{ width: `${((results.signals?.contactScore ?? 0)/10)*100}%` }} />
+                          </div>
+                          <p className="text-[10px] text-gray-400">
+                            {(results.signals?.contactScore ?? 0) >= 7 ? 'Email, phone, and LinkedIn detected ✓' : (results.signals?.contactScore ?? 0) >= 4 ? 'Email detected — add phone number and LinkedIn' : 'Add email, phone number, and LinkedIn URL'}
+                          </p>
+                        </div>
+
+                        {/* Word Count */}
+                        <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider">Resume Length</span>
+                            <span className="text-xs font-bold text-brand-blue">{results.signals?.lengthScore ?? 0}/5 pts</span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mb-3">
+                            <div className="h-full bg-gradient-to-r from-brand-blue to-brand-indigo rounded-full" style={{ width: `${((results.signals?.lengthScore ?? 0)/5)*100}%` }} />
+                          </div>
+                          <p className="text-[10px] text-gray-400">
+                            {results.signals?.wordCount ?? 0} words detected — ideal range is 350–800 words
+                          </p>
+                        </div>
+
+                      </div>
+                    </div>
+                  ) : (
+                    /* JD Mode: Matched / Missing keywords section */
+                    <div className="space-y-6">
                     {/* Search / Filter keywords bar */}
                     <div className="flex items-center gap-3 max-w-md bg-white/[0.03] border border-white/15 px-3.5 py-2.5 rounded-xl shadow-inner group focus-within:border-brand-indigo transition-all">
                       <Search size={16} className="text-gray-400 group-focus-within:text-brand-indigo" />
@@ -894,7 +1014,8 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
                         )}
                       </Card>
                     </div>
-                  </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 /* Highlighted Match View Tab */
