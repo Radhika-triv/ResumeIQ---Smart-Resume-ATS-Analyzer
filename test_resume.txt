@@ -1,0 +1,9 @@
+John Doe
+Software Engineer
+Email: john.doe@email.com
+
+Summary:
+Experienced React developer with 5 years of experience building modern web applications.
+
+Skills:
+React, JavaScript, CSS, HTML, Vite, Git, Next.js, Tailwind CSS, Node.js
