@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/ResumeIQ---Smart-Resume-ATS-Analyzer/",
   plugins: [
     react(),
     tailwindcss(),
