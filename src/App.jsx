@@ -37,6 +37,7 @@ export default function App() {
   const [isParsingFile, setIsParsingFile] = useState(false);
   const [uploadZoneKey, setUploadZoneKey] = useState(0);
   const [uploadedFileName, setUploadedFileName] = useState('');
+  const [uploadedFile, setUploadedFile] = useState(null);
   
   // App UX states
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -120,6 +121,7 @@ export default function App() {
   // File selection and extraction handlers
   const handleFileSelect = async (file) => {
     setIsParsingFile(true);
+    setUploadedFile(file);
     setUploadedFileName(file.name);
     try {
       const text = await extractTextFromFile(file);
@@ -127,6 +129,7 @@ export default function App() {
       const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
       addToast('success', `Extracted ${wordCount} words from "${file.name}"`);
     } catch (err) {
+      setUploadedFile(null);
       setUploadedFileName('');
       addToast('error', `Failed to parse file: ${err.message}`);
     } finally {
@@ -136,6 +139,7 @@ export default function App() {
 
   const handleFileRemove = () => {
     setResumeText('');
+    setUploadedFile(null);
     setUploadedFileName('');
     addToast('info', 'Resume file cleared.');
   };
@@ -148,6 +152,7 @@ export default function App() {
     setSearchQuery('');
     setActiveTab('summary');
     setUploadZoneKey((prev) => prev + 1);
+    setUploadedFile(null);
     setUploadedFileName('');
     addToast('info', 'Fields reset successfully.');
   };
@@ -460,46 +465,37 @@ ${results.suggestions.map((sug, idx) => `${idx + 1}. ${sug.title}\n   ${sug.desc
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {isParsingFile ? (
-                    <div className="border-2 border-dashed border-brand-indigo/30 bg-brand-indigo/5 rounded-2xl p-8 flex flex-col items-center justify-center text-center h-[300px]">
-                      <div className="relative flex items-center justify-center mb-4">
-                        <div className="w-12 h-12 rounded-full border-4 border-brand-indigo/20 border-t-brand-indigo animate-spin" />
-                        <FileText className="absolute text-brand-indigo animate-pulse" size={18} />
-                      </div>
-                      <h4 className="text-white font-medium text-sm mb-1">Parsing Resume File...</h4>
-                      <p className="text-xs text-gray-400 max-w-xs">Extracting textual content and skills vocabulary</p>
-                    </div>
-                  ) : (
-                    <div className="min-h-[300px] flex flex-col justify-between">
-                      <UploadZone
-                        key={uploadZoneKey}
-                        onFileSelect={handleFileSelect}
-                        onFileRemove={handleFileRemove}
-                        acceptedTypes={['.pdf', '.docx', '.txt']}
-                      />
-                      
-                      {resumeText.trim() && uploadedFileName && (
-                        <div className="mt-4 p-4 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.02] animate-fade-in-up">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="text-xs text-emerald-400 font-semibold mb-1">Successfully Parsed Content</p>
-                              <p className="text-[11px] text-gray-400 leading-relaxed">
-                                Extracted <span className="text-white font-bold">{getWordCount(resumeText)}</span> words from your resume. You can switch to the <strong className="text-brand-indigo cursor-pointer hover:underline" onClick={() => setResumeInputMode('text')}>Paste Text</strong> tab to review and make edits.
-                              </p>
-                            </div>
+                  <div className="min-h-[300px] flex flex-col justify-between">
+                    <UploadZone
+                      key={uploadZoneKey}
+                      file={uploadedFile}
+                      isParsing={isParsingFile}
+                      onFileSelect={handleFileSelect}
+                      onFileRemove={handleFileRemove}
+                      acceptedTypes={['.pdf', '.docx', '.txt']}
+                    />
+                    
+                    {resumeText.trim() && uploadedFileName && (
+                      <div className="mt-4 p-4 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.02] animate-fade-in-up">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-xs text-emerald-400 font-semibold mb-1">Successfully Parsed Content</p>
+                            <p className="text-[11px] text-gray-400 leading-relaxed">
+                              Extracted <span className="text-white font-bold">{getWordCount(resumeText)}</span> words from your resume. You can switch to the <strong className="text-brand-indigo cursor-pointer hover:underline" onClick={() => setResumeInputMode('text')}>Paste Text</strong> tab to review and make edits.
+                            </p>
                           </div>
                         </div>
-                      )}
-                      
-                      {!resumeText.trim() && (
-                        <div className="mt-4 p-4 rounded-xl border border-white/5 bg-white/[0.01]">
-                          <p className="text-[11px] text-gray-400 leading-relaxed text-center">
-                            Upload a PDF, Word document (.docx), or plain text (.txt) file. Text extraction runs entirely locally in your browser.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                    
+                    {!resumeText.trim() && (
+                      <div className="mt-4 p-4 rounded-xl border border-white/5 bg-white/[0.01]">
+                        <p className="text-[11px] text-gray-400 leading-relaxed text-center">
+                          Upload a PDF, Word document (.docx), or plain text (.txt) file. Text extraction runs entirely locally in your browser.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </Card>
